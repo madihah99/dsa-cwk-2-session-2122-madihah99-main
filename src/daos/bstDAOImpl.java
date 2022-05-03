@@ -8,9 +8,7 @@ import model.DisplayOrder;
 import model.StudentMarks;
 import view.aView;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,7 +16,7 @@ import java.util.logging.Logger;
 public class bstDAOImpl<E> extends DAO<E>{
 
     private BinarySearchTree<StudentMarks> theBST;
-    private aView theView;
+    private final aView theView;
     public static final char DELIMITER = ',';
     public static final char EOLN='\n';
     public static final String QUOTE="\"";
@@ -30,33 +28,63 @@ public class bstDAOImpl<E> extends DAO<E>{
 
     public bstDAOImpl() {
         // Add your code here
+        this.theBST = new BinarySearchTree<>();
+        this.theView = new aView();
     }
 
     public BinarySearchTree<StudentMarks> getTheBST() {
         // Add your code here
-        return null; // Add your return type here
+        return theBST; // Add your return type here
     }
 
     public void setTheBST(BinarySearchTree<StudentMarks> theBST) {
         // Add your code here
+        this.theBST = theBST;
     }
 
     @Override
     public void loadFromFile(String filename) {
-        String transactionFile = USERDIRECTORY +"\\" + filename;
+        String transactionFile = USERDIRECTORY + "\\" + filename;
         // Add your variables here
+        ArrayList<StudentMarks> dataSet = new ArrayList<>();
+        Sorts<StudentMarks> sort = new Sorts<>();
 
         try (BufferedReader br = new BufferedReader(new FileReader(transactionFile))) {
-            // Add your variables here
+            // declares variables
+            String studentID;
+            String givenName;
+            String lastName;
+            int ct1;
+            int ct2;
+            int ct3;
+            int moduleMark;
 
             String[] temp;
             String line = br.readLine();
             while(line!=null){
-                // split each line and store the values in your variables
+                // splits each line and stores the values in variables
+                temp = line.split(Character.toString(DELIMITER));
+                studentID = temp[0];
+                givenName = temp[1];
+                lastName = temp[2];
+                ct1 = Integer.parseInt(temp[3]);
+                ct2 = Integer.parseInt(temp[4]);
+                ct3 = Integer.parseInt(temp[5]);
+                moduleMark = Integer.parseInt(temp[6]);
 
-                // Create required instances of your modelled data
+                // Creates required instances of your modelled data
+                StudentMarks anEntry= new StudentMarks();
+                anEntry.setStudentID(studentID);
+                anEntry.setGivenName(givenName);
+                anEntry.setLastname(lastName);
+                anEntry.setCT1(ct1);
+                anEntry.setCT2(ct2);
+                anEntry.setCT3(ct3);
+                anEntry.calculateModuleMark();
 
                 // Insert into the dataset
+                //this.theBST.addNode(anEntry);
+                dataSet.add(anEntry);
                 line = br.readLine();
 
             }
@@ -64,19 +92,35 @@ public class bstDAOImpl<E> extends DAO<E>{
         } catch (IOException ex) {
             Logger.getLogger(StudentMarksBST.class.getName()).log(Level.INFO, null, ex);
         }
-        // sort the dataset
-        // create a balanced tree
-
+        // sorts the dataset
+        sort.BSort3(dataSet);
+        // creates a balanced tree
+        this.theBST.createBalancedTree(dataSet,0, dataSet.size() - 1);
     }
 
     @Override
     public void writeToFile(String filename) {
         // Add your code here
+        try {
+            File myFile = new File(USERDIRECTORY +"\\" + filename);
+
+            if(myFile.exists()){
+                myFile.delete();
+                System.out.println("File deleted: " + myFile.getName());
+            }
+            else if (myFile.createNewFile()) {
+                System.out.println("File created: " + myFile.getName());
+            }
+        } catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void add(E theData) {
         // Add your code here
+        this.theBST.addNode((StudentMarks) theData);
     }
 
     @Override
@@ -87,6 +131,14 @@ public class bstDAOImpl<E> extends DAO<E>{
     @Override
     public void findData(int theData) {
         // Add your code here
+        StudentMarks dataToFind = new StudentMarks("",  "", "", 0,0,0,0);
+        StudentMarks found = theBST.findItem(dataToFind);
+        if(found != null){
+            this.theView.displayABSTItem(found);
+        }
+        else{
+            System.out.format("The entry %s was %s found!\n", theData, TextColours.TEXT_RED + "not" + TextColours.TEXT_RESET);
+        }
     }
 
     @Override
@@ -97,14 +149,26 @@ public class bstDAOImpl<E> extends DAO<E>{
     @Override
     public void removeData(int theData) {
         // Add your code here
+        StudentMarks dataToFind = new StudentMarks("", "", "", 0,0,0,0);
+        StudentMarks found = theBST.findItem(dataToFind);
+        if(found != null){
+            this.theBST.deleteNode(found);
+            System.out.format("The entry below has been %s from the tree!\n", TextColours.TEXT_RED + "deleted" + TextColours.TEXT_RESET);
+            this.theView.displayABSTItem(found);
+        }
+        else{
+            System.out.format("The entry %s was %s found!\n", theData, TextColours.TEXT_RED + "not" + TextColours.TEXT_RESET);
+        }
     }
 
     public void displayBST(DisplayOrder order){
         // Add your code here
+        this.theView.displayBST(this.theBST, order);
     }
 
-    public void displayBSTChart(){
-        // Add your code here
+   public void displayBSTChart(){
+        //Add your code here
+        this.theView.displayAsChart(this.theBST);
     }
 
 }
